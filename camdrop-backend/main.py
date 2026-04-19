@@ -5,36 +5,34 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
+# Add this import at the top of your main.py
+from utils.zipping import generate_event_zip
 
-# Load environment variables
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Configuration
+URL = os.getenv("SUPABASE_URL")
+KEY = os.getenv("SUPABASE_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Supabase credentials not found in environment variables.")
+# Debugging connection on startup
+if not URL or not KEY:
+    print("❌ ERROR: Supabase credentials missing from .env file!")
+else:
+    print(f"✅ Supabase URL detected: {URL[:15]}...")
 
-# Initialize Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(URL, KEY)
 
 app = FastAPI(title="CamDrop API")
 
-# Request Model
 class EventCreate(BaseModel):
     name: str
     organizer_name: str
 
 @app.post("/events/", status_code=201)
 async def create_event(event: EventCreate):
-    """
-    Creates a new event, generates a unique deep link,
-    creates a QR code, and stores it in Supabase.
-    """
-    
-    # 1. Insert the new event into the Supabase database
     try:
+        # 1. Insert into Database
         response = supabase.table("events").insert({
             "name": event.name,
             "organizer_name": event.organizer_name,
@@ -43,49 +41,62 @@ async def create_event(event: EventCreate):
         
         event_data = response.data[0]
         event_id = event_data["id"]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database insertion failed: {str(e)}")
 
-    # 2. Generate the joining Deep Link
-    deep_link = f"{FRONTEND_URL}/join/{event_id}"
-
-    # 3. Generate the high-res QR Code
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(deep_link)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # 4. Process image to bytes for cloud upload
-    img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format='PNG')
-    img_bytes = img_byte_arr.getvalue()
-    
-    file_path = f"{event_id}_qr.png"
-    
-    # 5. Upload to Supabase Storage
-    try:
+        # 2. Generate QR Code
+        deep_link = f"{FRONTEND_URL}/join/{event_id}"
+        qr = qrcode.make(deep_link)
+        img_byte_arr = io.BytesIO()
+        qr.save(img_byte_arr, format='PNG')
+        
+        # 3. Upload QR to 'qr-codes' bucket
+        file_path = f"{event_id}_qr.png"
         supabase.storage.from_("qr-codes").upload(
-            file=img_bytes,
+            file=img_byte_arr.getvalue(),
             path=file_path,
             file_options={"content-type": "image/png"}
         )
-        # Retrieve the public URL for the organizer's dashboard
+        
         qr_url = supabase.storage.from_("qr-codes").get_public_url(file_path)
-    except Exception as e:
-        print(f"Warning - Failed to upload QR to storage: {e}")
-        qr_url = None 
 
-    # 6. Return the finalized package
-    return {
-        "event_id": event_id,
-        "name": event_data["name"],
-        "organizer_name": event_data["organizer_name"],
-        "deep_link": deep_link,
-        "qr_code_url": qr_url
-    }
+        return {
+            "event_id": event_id,
+            "name": event_data["name"],
+            "deep_link": deep_link,
+            "qr_url": qr_url
+        }
+        
+    except Exception as e:
+        # This will catch 401 errors or database issues
+        raise HTTPException(status_code=500, detail=f"Operation failed: {str(e)}")
+
+
+# ... (Keep your existing EventCreate class and POST /events/ route here) ...
+
+@app.put("/events/{event_id}/develop", status_code=200)
+async def develop_event(event_id: str):
+    """
+    Triggers the 'Big Reveal'. Changes the database status to unlock the photos
+    for the public gallery, and generates the organizer's ZIP download link.
+    """
+    try:
+        # 1. Update the database flag to unlock the RLS policy
+        # Now, the 'Public can view photos ONLY if developed' policy evaluates to true
+        response = supabase.table("events").update({
+            "is_developed": True
+        }).eq("id", event_id).execute()
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Event not found.")
+
+        # 2. Generate the ZIP bundle
+        zip_download_url = generate_event_zip(event_id)
+
+        return {
+            "status": "success",
+            "message": "The event has been developed. Photos are now public.",
+            "event_id": event_id,
+            "archive_url": zip_download_url
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to develop event: {str(e)}")
