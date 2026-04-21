@@ -17,6 +17,7 @@ const CameraView = () => {
     const [pendingCount, setPendingCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isDeveloped, setIsDeveloped] = useState(false);
+    const [livePulse, setLivePulse] = useState(0);
 
     const guestName = localStorage.getItem('camdrop_guest') || 'Anonymous';
 
@@ -43,15 +44,19 @@ const CameraView = () => {
     }, []);
 
     // Listen for realtime 'Develop' command from Dashboard
+    // Listen for realtime 'Develop' command and 'total_photos' increment
     useEffect(() => {
-        const fetchEventStatus = async () => {
-            const { data } = await supabase.from('events').select('is_developed').eq('id', eventId).single();
-            if (data?.is_developed) setIsDeveloped(true);
+        const fetchEventData = async () => {
+            const { data } = await supabase.from('events').select('is_developed, total_photos').eq('id', eventId).single();
+            if (data) {
+                if (data.is_developed) setIsDeveloped(true);
+                setLivePulse(data.total_photos || 0);
+            }
         };
-        fetchEventStatus();
+        fetchEventData();
 
         const eventSubscription = supabase
-            .channel(`public:events:id=eq.${eventId}`)
+            .channel(`camera-events-${eventId}`)
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
@@ -59,6 +64,9 @@ const CameraView = () => {
                     if (payload.new.is_developed) {
                         setIsDeveloped(true);
                         setImgSrc(null); // Clear viewfinder if they were composing a shot
+                    }
+                    if (payload.new.total_photos !== undefined) {
+                        setLivePulse(payload.new.total_photos);
                     }
                 }
             )
@@ -86,6 +94,10 @@ const CameraView = () => {
     };
 
     const capture = useCallback(() => {
+        // --- Haptics & Audio ---
+        if (navigator.vibrate) navigator.vibrate(50); // Sharp 50ms pulse
+        new Audio('/shutter.mp3').play().catch(e => console.log('Audio blocked:', e));
+
         const imageSrc = webcamRef.current.getScreenshot();
         setImgSrc(imageSrc);
         setTimeLeft(5); // Start the clock
@@ -108,17 +120,27 @@ const CameraView = () => {
     // --- Lower Level: Storage & IndexedDB Output ---
 
     const keep = async () => {
+        // Winding gear mechanical sound
+        new Audio('/winding.mp3').play().catch(e => console.log('Audio blocked:', e));
+
         const blob = dataURLtoBlob(imgSrc);
         const fileName = `${Date.now()}.jpg`;
         const filePath = `${eventId}/${guestName}/${fileName}`;
+
+        let syncSuccess = false;
 
         if (isOffline) {
             // Offline: Save to IndexedDB
             await localforage.setItem(filePath, blob);
             updatePendingCount();
+            syncSuccess = true;
         } else {
             // Online: Upload straight to Supabase
-            await uploadToSupabase(filePath, blob);
+            syncSuccess = await uploadToSupabase(filePath, blob);
+        }
+
+        if (syncSuccess && navigator.vibrate) {
+            navigator.vibrate([50, 100, 50]); // Double pulse to confirm save
         }
 
         setImgSrc(null); // Reset viewfinder
@@ -132,7 +154,7 @@ const CameraView = () => {
 
         if (storageError) {
             console.error("Upload failed:", storageError);
-            return;
+            return false;
         }
 
         // 2. NEW: Link the photo in the database so the Gallery can find it
@@ -144,7 +166,12 @@ const CameraView = () => {
                 storage_path: path
             }]);
 
-        if (dbError) console.error("Database link failed:", dbError);
+        if (dbError) {
+            console.error("Database link failed:", dbError);
+            return false;
+        }
+
+        return true;
     };
     const syncOfflinePhotos = async () => {
         setIsSyncing(true);
@@ -170,8 +197,8 @@ const CameraView = () => {
                 <CameraIcon size={64} className="mb-4 text-primary" />
                 <h1 className="mb-2 text-3xl font-bold">Event Developed!</h1>
                 <p className="mb-8 text-on-surface-variant text-lg">The organizer has closed the cameras and revealed the photos.</p>
-                <button 
-                    onClick={() => navigate(`/gallery/${eventId}`)} 
+                <button
+                    onClick={() => navigate(`/gallery/${eventId}`)}
                     className="rounded-full bg-primary px-8 py-4 font-medium text-on-primary shadow-elevation-1 transition active:scale-95"
                 >
                     View the Gallery
@@ -184,7 +211,12 @@ const CameraView = () => {
         <div className="flex h-screen flex-col bg-black text-white">
             {/* Top HUD */}
             <div className="absolute top-0 z-10 flex w-full justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
-                <div className="font-bold">{guestName}</div>
+                <div className="flex flex-col">
+                    <span className="font-bold">{guestName}</span>
+                    <span className="text-xs text-yellow-500 font-semibold animate-pulse mt-1">
+                        🔥 {livePulse} photos snapped
+                    </span>
+                </div>
                 <div className="flex items-center gap-2">
                     {isOffline && <CloudOff size={20} className="text-red-500" />}
                     {isSyncing && <RefreshCw size={20} className="animate-spin text-yellow-500" />}

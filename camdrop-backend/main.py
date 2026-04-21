@@ -109,3 +109,36 @@ async def develop_event(event_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to develop event: {str(e)}")
+
+@app.delete("/events/{event_id}/photos", status_code=200)
+async def delete_event_photos(event_id: str):
+    """
+    Permanently drops all photos associated with this event from both the Storage bucket and the Postgres database.
+    Also removes the generated ZIP archive.
+    """
+    try:
+        # 1. Fetch all photos to map their storage paths
+        response = supabase.table("photos").select("storage_path").eq("event_id", event_id).execute()
+        photos = response.data
+        
+        paths_to_delete = [photo["storage_path"] for photo in photos] if photos else []
+        
+        # 2. Add the ZIP archive to the slaughter list just in case
+        archive_path = f"archives/{event_id}_archive.zip"
+        paths_to_delete.append(archive_path)
+
+        # 3. Batch delete from Supabase storage (max ~100 per request is optimal, but SDK handles arrays)
+        if paths_to_delete:
+            # Chunking to be extremely safe with URL payload limits
+            for i in range(0, len(paths_to_delete), 100):
+                supabase.storage.from_("event-photos").remove(paths_to_delete[i:i+100])
+
+        # 4. Wipe rows from the actual database
+        supabase.table("photos").delete().eq("event_id", event_id).execute()
+
+        return {
+            "status": "success", 
+            "message": f"Successfully wiped all media for event {event_id} from cloud servers."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete server photos: {str(e)}")

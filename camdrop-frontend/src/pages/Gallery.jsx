@@ -9,7 +9,7 @@ const Gallery = () => {
     // State Management
     const [isDeveloped, setIsDeveloped] = useState(false);
     const [eventName, setEventName] = useState('');
-    const [photos, setPhotos] = useState([]);
+    const [albums, setAlbums] = useState({});
     const [loading, setLoading] = useState(true);
 
     // --- Middle Level: Core Logic & Real-time Fetching ---
@@ -66,12 +66,19 @@ const Gallery = () => {
 
             return {
                 url: data.publicUrl,
-                guestName: record.guest_name,
+                guestName: record.guest_name || 'Anonymous',
                 path: record.storage_path
             };
         });
 
-        setPhotos(photosWithUrls);
+        // 3. Group by guestName
+        const groupedAlbums = photosWithUrls.reduce((acc, photo) => {
+            if (!acc[photo.guestName]) acc[photo.guestName] = [];
+            acc[photo.guestName].push(photo);
+            return acc;
+        }, {});
+
+        setAlbums(groupedAlbums);
         setLoading(false);
     };
 
@@ -96,23 +103,29 @@ const Gallery = () => {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2">
-                    {photos.length === 0 ? (
-                        <div className="col-span-full text-center text-on-surface-variant py-10 bg-surface-container rounded-[24px] shadow-elevation-1">
+                <div className="space-y-12">
+                    {Object.keys(albums).length === 0 ? (
+                        <div className="text-center text-on-surface-variant py-10 bg-surface-container rounded-[24px] shadow-elevation-1 mx-2">
                             <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
                             <p className="text-lg">No photos were taken at this event.</p>
                         </div>
                     ) : (
-                        photos.map((photo, index) => (
-                            <div key={index} className="relative group rounded-[16px] overflow-hidden shadow-elevation-1 bg-surface-container">
-                                <img
-                                    src={photo.url}
-                                    alt={`Taken by ${photo.guestName}`}
-                                    className="w-full h-48 sm:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                                    loading="lazy"
-                                />
-                                <div className="absolute bottom-0 w-full bg-gradient-to-t from-surface-dim/95 to-transparent p-3">
-                                    <span className="text-sm font-medium text-primary">📸 {photo.guestName}</span>
+                        Object.entries(albums).map(([guestName, guestPhotos]) => (
+                            <div key={guestName} className="mx-2">
+                                <h3 className="text-2xl font-medium text-primary mb-4 pb-2 border-b-2 border-surface-container-highest flex items-center gap-2">
+                                    📸 {guestName}'s Roll ({guestPhotos.length} {guestPhotos.length === 1 ? 'photo' : 'photos'})
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {guestPhotos.map((photo, index) => (
+                                        <div key={index} className="relative group rounded-[16px] overflow-hidden shadow-elevation-1 bg-surface-container">
+                                            <img
+                                                src={photo.url}
+                                                alt={`Taken by ${photo.guestName}`}
+                                                className="w-full h-48 sm:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))

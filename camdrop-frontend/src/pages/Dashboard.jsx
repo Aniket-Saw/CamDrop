@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Download, QrCode, Camera, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Download, QrCode, Camera, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react';
 
 const Dashboard = () => {
     const { eventId } = useParams();
@@ -9,6 +9,7 @@ const Dashboard = () => {
     const [eventData, setEventData] = useState(null);
     const [photoCount, setPhotoCount] = useState(0);
     const [isDeveloping, setIsDeveloping] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [archiveUrl, setArchiveUrl] = useState(null);
     const [loading, setLoading] = useState(true);
     const [connectionError, setConnectionError] = useState(false);
@@ -20,7 +21,7 @@ const Dashboard = () => {
 
         // Subscribe to real-time photo inserts for this specific event
         const photoSubscription = supabase
-            .channel(`public:photos:event_id=eq.${eventId}`)
+            .channel(`dashboard-photos-${eventId}`)
             .on(
                 'postgres_changes',
                 {
@@ -104,6 +105,32 @@ const Dashboard = () => {
         setIsDeveloping(false);
     };
 
+    const handleWipePhotos = async () => {
+        const confirmWipe = window.confirm(
+            "CRITICAL: Are you sure you want to permanently delete all photos from the cloud? Ensure you have downloaded the ZIP archive first! This action cannot be undone."
+        );
+        if (!confirmWipe) return;
+
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`http://localhost:8000/events/${eventId}/photos`, {
+                method: 'DELETE',
+            });
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert("All photos have been successfully deleted from the server.");
+                setPhotoCount(0); // Instantly drop the UI dial to 0
+            } else {
+                alert(`Error: ${result.detail}`);
+            }
+        } catch (error) {
+            console.error("Failed to delete photos:", error);
+            alert("Server error during deletion. Is the backend running?");
+        }
+        setIsDeleting(false);
+    };
+
     // --- Upper Level: UI Rendering ---
     if (loading) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface">Loading Dashboard...</div>;
     if (!eventData) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface">Event not found.</div>;
@@ -173,15 +200,28 @@ const Dashboard = () => {
                             )}
 
                             {(archiveUrl || eventData.is_developed) && (
-                                <a
-                                    href={archiveUrl || `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/event-photos/archives/${eventId}_archive.zip`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full rounded-full border-2 border-outline py-4 font-medium text-primary transition hover:bg-surface-container-highest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                                >
-                                    <Download size={20} />
-                                    Download ZIP Archive
-                                </a>
+                                <div className="space-y-4">
+                                    <a
+                                        href={archiveUrl || `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/event-photos/archives/${eventId}_archive.zip`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full rounded-full border-2 border-outline py-4 font-medium text-primary transition hover:bg-surface-container-highest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                    >
+                                        <Download size={20} />
+                                        Download ZIP Archive
+                                    </a>
+
+                                    {photoCount > 0 && (
+                                        <button
+                                            onClick={handleWipePhotos}
+                                            disabled={isDeleting}
+                                            className="w-full rounded-full border-2 border-error text-error py-4 font-medium transition hover:bg-error hover:text-white flex items-center justify-center gap-2 shadow-elevation-1 active:scale-95 transition-transform disabled:opacity-50"
+                                        >
+                                            <Trash2 size={20} />
+                                            {isDeleting ? "Wiping Servers..." : "Wipe Cloud Photos"}
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
