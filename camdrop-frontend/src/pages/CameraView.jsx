@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import localforage from 'localforage';
 import { supabase } from '../supabaseClient';
-import { Check, X, Camera as CameraIcon, CloudOff, RefreshCw } from 'lucide-react';
+import { Check, X, Camera as CameraIcon, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { analyzeImageQuality } from '../utils/imageQuality';
 
 const CameraView = () => {
     const { eventId } = useParams();
@@ -18,6 +19,7 @@ const CameraView = () => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [isDeveloped, setIsDeveloped] = useState(false);
     const [livePulse, setLivePulse] = useState(0);
+    const [qualityWarning, setQualityWarning] = useState(null);
 
     const guestName = localStorage.getItem('camdrop_guest') || 'Anonymous';
 
@@ -93,7 +95,7 @@ const CameraView = () => {
         setPendingCount(keys.length);
     };
 
-    const capture = useCallback(() => {
+    const capture = useCallback(async () => {
         // --- Haptics & Audio ---
         if (navigator.vibrate) navigator.vibrate(50); // Sharp 50ms pulse
         new Audio('/shutter.mp3').play().catch(e => console.log('Audio blocked:', e));
@@ -101,10 +103,23 @@ const CameraView = () => {
         const imageSrc = webcamRef.current.getScreenshot();
         setImgSrc(imageSrc);
         setTimeLeft(5); // Start the clock
+        setQualityWarning(null); // Reset warnings
+        
+        // Fire the edge compute check
+        const quality = await analyzeImageQuality(imageSrc);
+        
+        if (quality.isDark && quality.isBlurry) {
+            setQualityWarning("Dark & Blurry!");
+        } else if (quality.isDark) {
+            setQualityWarning("Too Dark!");
+        } else if (quality.isBlurry) {
+            setQualityWarning("Too Blurry!");
+        }
     }, [webcamRef]);
 
     const scrap = () => {
         setImgSrc(null);
+        setQualityWarning(null); // Clear warning if they scrap it
     };
 
     // Helper: Convert Base64 from Webcam to Blob for Storage
@@ -235,7 +250,20 @@ const CameraView = () => {
                         className="h-full w-full object-cover"
                     />
                 ) : (
-                    <img src={imgSrc} alt="Captured" className="h-full w-full object-cover" />
+                    <>
+                        <img src={imgSrc} alt="Captured" className="h-full w-full object-cover" />
+                        
+                        {/* NEW: Quality Warning Overlay */}
+                        {qualityWarning && (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center rounded-xl bg-black/80 px-6 py-4 text-red-500 animate-pulse border border-red-500/50 backdrop-blur-sm">
+                                <AlertTriangle size={32} className="mb-2" />
+                                <span className="text-xl font-black uppercase tracking-widest text-center">
+                                    {qualityWarning}
+                                </span>
+                                <span className="text-xs text-zinc-400 mt-1">Scrap to try again</span>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

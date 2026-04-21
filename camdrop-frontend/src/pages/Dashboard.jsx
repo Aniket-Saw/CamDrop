@@ -19,20 +19,25 @@ const Dashboard = () => {
         // Run initial fetch for fast load
         fetchDashboardData();
 
-        // Subscribe to real-time photo inserts for this specific event
-        const photoSubscription = supabase
-            .channel(`dashboard-photos-${eventId}`)
+        // Subscribe to real-time updates via our secure SQL trigger on the 'events' table
+        const dashboardSubscription = supabase
+            .channel(`dashboard-events-${eventId}`)
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: 'UPDATE',
                     schema: 'public',
-                    table: 'photos',
-                    filter: `event_id=eq.${eventId}`
+                    table: 'events',
+                    filter: `id=eq.${eventId}`
                 },
                 (payload) => {
-                    // Increment the counter when a camera user uploads a new photo
-                    setPhotoCount(prev => prev + 1);
+                    // Update the counter when the database trigger fires
+                    if (payload.new.total_photos !== undefined) {
+                        setPhotoCount(payload.new.total_photos);
+                    }
+                    if (payload.new.is_developed !== undefined) {
+                        setEventData(prev => ({...prev, is_developed: payload.new.is_developed}));
+                    }
                 }
             )
             .subscribe((status) => {
@@ -48,7 +53,7 @@ const Dashboard = () => {
 
         return () => {
             // Cleanup the subscription when leaving the dashboard
-            supabase.removeChannel(photoSubscription);
+            supabase.removeChannel(dashboardSubscription);
         };
     }, [eventId]);
 
@@ -63,14 +68,14 @@ const Dashboard = () => {
         if (eventError) console.error(eventError);
         else setEventData(event);
 
-        // 2. Get Total Photo Count
-        const { count, error: countError } = await supabase
-            .from('photos')
-            .select('*', { count: 'exact', head: true })
-            .eq('event_id', eventId);
-
-        if (countError) console.error(countError);
-        else setPhotoCount(count || 0);
+        // 2. Map photo dial securely to the SQL trigger data payload
+        if (event && event.total_photos !== undefined) {
+            setPhotoCount(event.total_photos);
+        } else if (!eventError) {
+             // Fallback to table count if the trigger column is somehow missing
+            const { count } = await supabase.from('photos').select('*', { count: 'exact', head: true }).eq('event_id', eventId);
+            setPhotoCount(count || 0);
+        }
 
         setLoading(false);
     };
