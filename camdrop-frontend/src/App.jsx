@@ -1,14 +1,19 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
 import JoinEvent from './pages/JoinEvent';
+import CameraView from './pages/CameraView';
+import Gallery from './pages/Gallery';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/join/:eventId" element={<JoinEvent />} />
-        {/* We will add the Camera and Gallery routes next */}
-        <Route path="/camera/:eventId" element={<div className="text-white p-10">Camera coming next...</div>} />
-        <Route path="/" element={<div className="text-white p-10">Welcome to CamDrop. Scan a QR code to join an event.</div>} />
+        <Route path="/camera/:eventId" element={<CameraView />} />
+        <Route path="/gallery/:eventId" element={<Gallery />} />
+        <Route path="/dashboard/:eventId" element={<Dashboard />} />
       </Routes>
     </Router>
   );

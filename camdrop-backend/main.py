@@ -2,6 +2,7 @@ import os
 import io
 import qrcode
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -24,6 +25,14 @@ else:
 supabase: Client = create_client(URL, KEY)
 
 app = FastAPI(title="CamDrop API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class EventCreate(BaseModel):
     name: str

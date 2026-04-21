@@ -39,30 +39,33 @@ const JoinEvent = () => {
         navigate(`/camera/${eventId}`);
     };
 
-    if (loading) return <div className="flex h-screen items-center justify-center">Loading event...</div>;
+    if (loading) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface">Loading event...</div>;
 
     return (
-        <div className="flex h-screen flex-col items-center justify-center bg-zinc-900 p-6 text-white">
-            <div className="mb-8 rounded-full bg-yellow-500 p-4 text-black">
+        <div className="flex min-h-[100svh] flex-col items-center justify-center bg-surface p-6 text-on-surface">
+            <div className="mb-8 rounded-2xl bg-primary p-5 text-on-primary shadow-elevation-2">
                 <Camera size={48} />
             </div>
-            <h1 className="mb-2 text-3xl font-bold">{eventName}</h1>
-            <p className="mb-8 text-zinc-400">Enter your name to start clicking</p>
+            <h1 className="mb-2 text-4xl font-normal text-center">{eventName}</h1>
+            <p className="mb-10 text-on-surface-variant text-lg text-center">Enter your name to start clicking.</p>
 
-            <input
-                type="text"
-                placeholder="Your Name (e.g. Aniket)"
-                className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-800 p-4 text-white outline-none focus:border-yellow-500"
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-            />
+            <div className="w-full max-w-sm rounded-3xl bg-surface-container p-6 shadow-elevation-1">
+                <input
+                    type="text"
+                    placeholder="Your Name (e.g. Alex)"
+                    className="w-full rounded-md border-2 border-outline bg-transparent p-4 text-on-surface outline-none focus:border-primary transition-colors text-lg"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                />
 
-            <button
-                onClick={handleJoin}
-                className="mt-6 w-full max-w-sm rounded-lg bg-yellow-500 p-4 font-bold text-black transition-transform active:scale-95"
-            >
-                Grab Your Camera
-            </button>
+                <button
+                    onClick={handleJoin}
+                    className="mt-6 w-full rounded-full bg-primary py-4 font-medium text-on-primary shadow-elevation-1 transition-transform active:scale-95 text-lg hover:bg-primary/90"
+                >
+                    Grab Your Camera
+                </button>
+            </div>
         </div>
     );
 };

@@ -16,6 +16,7 @@ const CameraView = () => {
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [pendingCount, setPendingCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isDeveloped, setIsDeveloped] = useState(false);
 
     const guestName = localStorage.getItem('camdrop_guest') || 'Anonymous';
 
@@ -40,6 +41,33 @@ const CameraView = () => {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    // Listen for realtime 'Develop' command from Dashboard
+    useEffect(() => {
+        const fetchEventStatus = async () => {
+            const { data } = await supabase.from('events').select('is_developed').eq('id', eventId).single();
+            if (data?.is_developed) setIsDeveloped(true);
+        };
+        fetchEventStatus();
+
+        const eventSubscription = supabase
+            .channel(`public:events:id=eq.${eventId}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
+                (payload) => {
+                    if (payload.new.is_developed) {
+                        setIsDeveloped(true);
+                        setImgSrc(null); // Clear viewfinder if they were composing a shot
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(eventSubscription);
+        };
+    }, [eventId]);
 
     // 5-Second Timer Logic
     useEffect(() => {
@@ -97,13 +125,27 @@ const CameraView = () => {
     };
 
     const uploadToSupabase = async (path, fileBlob) => {
-        const { error } = await supabase.storage
+        // 1. Upload to Storage Vault
+        const { error: storageError } = await supabase.storage
             .from('event-photos')
             .upload(path, fileBlob, { contentType: 'image/jpeg' });
 
-        if (error) console.error("Upload failed:", error);
-    };
+        if (storageError) {
+            console.error("Upload failed:", storageError);
+            return;
+        }
 
+        // 2. NEW: Link the photo in the database so the Gallery can find it
+        const { error: dbError } = await supabase
+            .from('photos')
+            .insert([{
+                event_id: eventId,
+                guest_name: guestName,
+                storage_path: path
+            }]);
+
+        if (dbError) console.error("Database link failed:", dbError);
+    };
     const syncOfflinePhotos = async () => {
         setIsSyncing(true);
         try {
@@ -121,6 +163,22 @@ const CameraView = () => {
     };
 
     // --- Upper Level: UI Rendering ---
+
+    if (isDeveloped) {
+        return (
+            <div className="flex h-screen flex-col items-center justify-center bg-surface p-6 text-center text-on-surface">
+                <CameraIcon size={64} className="mb-4 text-primary" />
+                <h1 className="mb-2 text-3xl font-bold">Event Developed!</h1>
+                <p className="mb-8 text-on-surface-variant text-lg">The organizer has closed the cameras and revealed the photos.</p>
+                <button 
+                    onClick={() => navigate(`/gallery/${eventId}`)} 
+                    className="rounded-full bg-primary px-8 py-4 font-medium text-on-primary shadow-elevation-1 transition active:scale-95"
+                >
+                    View the Gallery
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen flex-col bg-black text-white">
