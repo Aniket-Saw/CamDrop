@@ -83,52 +83,72 @@ const Gallery = () => {
     };
 
     // --- Upper Level: UI Rendering ---
-    if (loading) return <div className="flex h-[100svh] items-center justify-center bg-surface text-on-surface">Loading darkroom...</div>;
+    if (loading) {
+        return (
+            <div className="flex h-[100svh] items-center justify-center bg-surface text-on-surface-variant">
+                <div className="animate-pulse text-lg">Loading darkroom...</div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-surface text-on-surface p-6">
-            <header className="mb-8 text-center pt-4">
-                <h1 className="text-4xl font-semibold text-primary">{eventName}</h1>
+        <div className="min-h-screen bg-surface text-on-surface">
+            {/* Header */}
+            <header className="py-8 px-6 text-center">
+                <h1 className="text-4xl font-black text-primary tracking-tight">{eventName}</h1>
                 <p className="text-on-surface-variant mt-2 text-lg">The Photo Dump</p>
             </header>
 
             {!isDeveloped ? (
-                <div className="flex flex-col items-center justify-center mt-20 text-center px-4">
-                    <div className="mb-6 rounded-[28px] bg-surface-container shadow-elevation-1 p-8 text-on-surface-variant">
-                        <Lock size={64} />
+                /* State A: The Locked Vault */
+                <div className="flex flex-col items-center justify-center px-6" style={{ minHeight: 'calc(100vh - 200px)' }}>
+                    <div className="w-28 h-28 rounded-full bg-surface-container-high flex items-center justify-center mb-8 shadow-card">
+                        <Lock size={56} className="text-on-surface-variant" />
                     </div>
-                    <h2 className="text-2xl font-medium mb-3 text-on-surface">Photos are Developing...</h2>
-                    <p className="text-on-surface-variant max-w-sm leading-relaxed">
-                        Check back later. The event organizer will reveal the gallery when the event is over!
+                    <h2 className="text-2xl font-bold mb-3 text-on-surface text-center">Photos are Developing...</h2>
+                    <p className="text-on-surface-variant max-w-sm text-center leading-relaxed">
+                        Check back later. The event organizer will reveal the gallery when the event is over.
                     </p>
                 </div>
             ) : (
-                <div className="space-y-12">
+                /* State B: The Photo Grid */
+                <div className="px-4 pb-8 md:px-6">
                     {Object.keys(albums).length === 0 ? (
-                        <div className="text-center text-on-surface-variant py-10 bg-surface-container rounded-[24px] shadow-elevation-1 mx-2">
-                            <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
+                        <div className="text-center text-on-surface-variant py-16 bg-surface-container rounded-xl border border-border mx-2 shadow-card">
+                            <ImageIcon size={48} className="mx-auto mb-4 opacity-40" />
                             <p className="text-lg">No photos were taken at this event.</p>
                         </div>
                     ) : (
-                        Object.entries(albums).map(([guestName, guestPhotos]) => (
-                            <div key={guestName} className="mx-2">
-                                <h3 className="text-2xl font-medium text-primary mb-4 pb-2 border-b-2 border-surface-container-highest flex items-center gap-2">
-                                    📸 {guestName}'s Roll ({guestPhotos.length} {guestPhotos.length === 1 ? 'photo' : 'photos'})
-                                </h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {guestPhotos.map((photo, index) => (
-                                        <div key={index} className="relative group rounded-[16px] overflow-hidden shadow-elevation-1 bg-surface-container">
-                                            <img
-                                                src={photo.url}
-                                                alt={`Taken by ${photo.guestName}`}
-                                                className="w-full h-48 sm:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    ))}
+                        <div className="space-y-10">
+                            {Object.entries(albums).map(([guestName, guestPhotos]) => (
+                                <div key={guestName}>
+                                    <h3 className="text-xl font-bold text-primary mb-4 px-2 flex items-center gap-2">
+                                        📸 {guestName}'s Roll
+                                        <span className="text-sm font-normal text-on-surface-variant">
+                                            ({guestPhotos.length} {guestPhotos.length === 1 ? 'photo' : 'photos'})
+                                        </span>
+                                    </h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                                        {guestPhotos.map((photo, index) => (
+                                            <div key={index} className="relative group rounded-lg overflow-hidden shadow-card bg-surface-container">
+                                                <img
+                                                    src={photo.url}
+                                                    alt={`Taken by ${photo.guestName}`}
+                                                    className="w-full h-48 md:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                                {/* Attribution Overlay */}
+                                                <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                                                    <span className="text-xs font-semibold text-primary">
+                                                        📸 {photo.guestName}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     )}
                 </div>
             )}

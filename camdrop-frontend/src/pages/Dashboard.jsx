@@ -137,80 +137,106 @@ const Dashboard = () => {
     };
 
     // --- Upper Level: UI Rendering ---
-    if (loading) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface">Loading Dashboard...</div>;
-    if (!eventData) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface">Event not found.</div>;
+    if (loading) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface-variant"><div className="animate-pulse text-lg">Loading Dashboard...</div></div>;
+    if (!eventData) return <div className="flex h-screen items-center justify-center bg-surface text-on-surface-variant">Event not found.</div>;
 
     return (
-        <div className="min-h-screen bg-surface p-4 md:p-8 text-on-surface">
-            <div className="mx-auto max-w-4xl">
+        <div className="min-h-screen bg-surface p-4 md:p-8">
+            <div className="mx-auto max-w-5xl">
 
                 {/* Header */}
-                <header className="mb-8 pb-4 text-center md:mb-10 md:pb-6">
-                    <h1 className="text-4xl font-semibold text-primary md:text-5xl">{eventData.name}</h1>
-                    <p className="text-on-surface-variant mt-2 text-lg md:text-xl">Organizer: {eventData.organizer_name}</p>
+                <header className="mb-8 pb-6 border-b border-border">
+                    <h1 className="text-4xl font-black text-primary md:text-5xl tracking-tight">{eventData.name}</h1>
+                    <p className="text-on-surface-variant mt-2 text-lg">Organizer: <span className="text-on-surface font-medium">{eventData.organizer_name}</span></p>
                 </header>
 
-                <div className="grid gap-8 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
 
-                    {/* Stats & QR Code Card (MD3 Elevated Card) */}
-                    <div className="rounded-[28px] bg-surface-container shadow-elevation-1 p-6 flex flex-col justify-between">
-                        <h2 className="mb-4 text-xl font-medium flex items-center gap-2"><QrCode className="text-primary"/> Event Access</h2>
+                    {/* Left Column: Assets & Stats */}
+                    <div className="bg-surface-container-high rounded-xl border border-border-light p-6 shadow-card">
+                        <h2 className="mb-5 text-lg font-bold flex items-center gap-2 text-on-surface">
+                            <QrCode size={20} className="text-primary" /> Event Access
+                        </h2>
 
-                        <div className="mb-6 flex justify-center rounded-[20px] bg-white p-4 shadow-elevation-2 mx-auto">
-                            {/* Assuming your bucket is public, we format the URL */}
-                            <img
-                                src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/qr-codes/${eventId}_qr.png`}
-                                alt="Event QR Code"
-                                className="w-48 h-48"
-                            />
-                        </div>
-
-                        <div className="flex items-center justify-between rounded-[16px] bg-surface-container-highest p-4 mt-auto shadow-elevation-1">
-                            <div className="flex flex-col gap-1">
-                                <span className="flex items-center gap-2 text-on-surface"><Camera size={20} className="text-primary"/> Photos Taken:</span>
-                                {connectionError && (
-                                    <span className="flex items-center gap-1 text-xs text-error"><AlertTriangle size={12}/> Live updates paused</span>
-                                )}
+                        {/* QR Code */}
+                        <div className="mb-6 flex justify-center">
+                            <div className="bg-white p-4 rounded-2xl shadow-deep">
+                                <img
+                                    src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/qr-codes/${eventId}_qr.png`}
+                                    alt="Event QR Code"
+                                    className="w-52 h-52"
+                                />
                             </div>
-                            <span className="text-2xl font-bold text-primary">{photoCount}</span>
+                        </div>
+                        <a
+                            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/qr-codes/${eventId}_qr.png`}
+                            download
+                            className="block text-center text-sm text-primary hover:underline mb-6 font-medium"
+                        >
+                            Download QR Code
+                        </a>
+
+                        {/* Live Stats */}
+                        <div className="bg-surface-container rounded-xl p-5 border border-border">
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-1">
+                                    <span className="flex items-center gap-2 text-on-surface-variant text-sm font-medium">
+                                        <Camera size={16} className="text-primary" /> Photos Taken
+                                    </span>
+                                    {connectionError && (
+                                        <span className="flex items-center gap-1 text-xs text-danger">
+                                            <AlertTriangle size={12} /> Live updates paused
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-5xl font-black text-primary tabular-nums">{photoCount}</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Control Panel Card (MD3 Elevated Card) */}
-                    <div className="rounded-[28px] bg-surface-container shadow-elevation-1 p-6 flex flex-col justify-between">
-                        <div>
-                            <h2 className="mb-4 text-xl font-medium">Event Status</h2>
-                            {eventData.is_developed ? (
-                                <div className="mb-6 flex items-center gap-3 text-on-secondary-container bg-secondary-container p-4 rounded-[16px]">
-                                    <CheckCircle size={24} />
-                                    <span className="font-medium text-lg">Developed & Public</span>
-                                </div>
-                            ) : (
-                                <p className="mb-6 text-on-surface-variant text-base leading-relaxed tracking-wide bg-surface-container-highest p-4 rounded-[16px]">
-                                    The event is currently live. Guests can take photos but cannot see the gallery.
+                    {/* Right Column: Control Panel */}
+                    <div className="bg-surface-container-high rounded-xl border border-border-light p-6 shadow-card flex flex-col">
+                        <h2 className="mb-5 text-lg font-bold text-on-surface">Event Status</h2>
+
+                        {eventData.is_developed ? (
+                            <div className="mb-6 flex items-center gap-3 bg-success/15 text-success p-4 rounded-xl border border-success/30">
+                                <CheckCircle size={24} />
+                                <span className="font-bold text-lg">Developed & Public</span>
+                            </div>
+                        ) : (
+                            <div className="mb-6 bg-surface-container rounded-xl p-4 border border-border">
+                                <p className="text-on-surface-variant text-sm leading-relaxed">
+                                    The event is currently <span className="text-primary font-semibold">live</span>. Guests can take photos but cannot see the gallery.
                                     Clicking "Develop" will end the event, lock all cameras, and reveal the gallery to everyone.
                                 </p>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 mt-auto">
                             {!eventData.is_developed && (
-                                <button
-                                    onClick={handleDevelop}
-                                    disabled={isDeveloping}
-                                    className="w-full rounded-full bg-primary py-4 font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container disabled:opacity-50 flex justify-center shadow-elevation-1 active:scale-95 transition-transform"
-                                >
-                                    {isDeveloping ? "Developing Roll..." : "Develop Event (Reveal Photos)"}
-                                </button>
+                                <div>
+                                    <button
+                                        id="develop-event-button"
+                                        onClick={handleDevelop}
+                                        disabled={isDeveloping}
+                                        className="w-full bg-primary hover:bg-primary-hover text-on-primary py-4 rounded-full font-bold text-lg transition-all active:scale-95 disabled:opacity-50 shadow-glow cursor-pointer"
+                                    >
+                                        {isDeveloping ? "Developing Roll..." : "🎞️ Develop Event (Reveal Photos)"}
+                                    </button>
+                                    <p className="text-xs text-on-surface-dim text-center mt-2">
+                                        This will permanently lock all cameras and reveal the gallery.
+                                    </p>
+                                </div>
                             )}
 
                             {(archiveUrl || eventData.is_developed) && (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     <a
+                                        id="download-zip-button"
                                         href={archiveUrl || `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/event-photos/archives/${eventId}_archive.zip`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="w-full rounded-full border-2 border-outline py-4 font-medium text-primary transition hover:bg-surface-container-highest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                        className="w-full rounded-full border-2 border-primary text-primary py-4 font-bold transition-colors hover:bg-primary hover:text-on-primary flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
                                     >
                                         <Download size={20} />
                                         Download ZIP Archive
@@ -218,9 +244,10 @@ const Dashboard = () => {
 
                                     {photoCount > 0 && (
                                         <button
+                                            id="wipe-photos-button"
                                             onClick={handleWipePhotos}
                                             disabled={isDeleting}
-                                            className="w-full rounded-full border-2 border-error text-error py-4 font-medium transition hover:bg-error hover:text-white flex items-center justify-center gap-2 shadow-elevation-1 active:scale-95 transition-transform disabled:opacity-50"
+                                            className="w-full rounded-full border-2 border-danger text-danger py-4 font-bold transition-colors hover:bg-danger hover:text-on-danger flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Trash2 size={20} />
                                             {isDeleting ? "Wiping Servers..." : "Wipe Cloud Photos"}

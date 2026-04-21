@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, QrCode, ArrowRight, Loader } from 'lucide-react';
+import { Camera, ArrowRight, Loader } from 'lucide-react';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -42,65 +42,71 @@ const Home = () => {
         <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-6">
 
             {/* Hero Section */}
-            <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center p-5 bg-primary text-on-primary rounded-2xl mb-6 shadow-elevation-2">
-                    <Camera size={48} />
+            <div className="text-center mb-10">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-surface-container-high rounded-full mb-6 shadow-card">
+                    <Camera size={40} className="text-primary" />
                 </div>
-                <h1 className="text-5xl font-normal mb-4 tracking-tight text-on-surface">CamDrop</h1>
-                <p className="text-xl text-on-surface-variant max-w-md mx-auto">
-                    The frictionless digital disposable camera. No apps, no hassle.
+                <h1 className="text-5xl font-black mb-4 tracking-tight">
+                    Cam<span className="text-primary">Drop</span>
+                </h1>
+                <p className="text-lg text-on-surface-variant max-w-md mx-auto leading-relaxed">
+                    The frictionless digital disposable camera. No apps, no logins, no hassle.
                 </p>
             </div>
 
-            {/* Main Action Area */}
-            <div className="w-full max-w-md bg-surface-container rounded-3xl p-8 shadow-elevation-1">
+            {/* Main Action Card */}
+            <div className="w-full max-w-md bg-surface-container rounded-2xl p-8 border border-border shadow-card">
                 {!createdEvent ? (
                     // FORM: Create New Event
-                    <form onSubmit={handleCreateEvent} className="space-y-6">
+                    <form onSubmit={handleCreateEvent} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-1">Event Name</label>
+                            <label className="block text-sm font-medium text-on-surface-variant mb-2">Event Name</label>
                             <input
+                                id="event-name-input"
                                 required
                                 type="text"
-                                className="w-full bg-transparent border-2 border-outline rounded-sm p-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                                className="w-full input-focus-ring rounded-lg p-3.5 text-on-surface placeholder-on-surface-dim"
                                 placeholder="Sarah & John's Wedding"
                                 value={eventName}
                                 onChange={(e) => setEventName(e.target.value)}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-1">Organizer Name</label>
+                            <label className="block text-sm font-medium text-on-surface-variant mb-2">Organizer Name</label>
                             <input
+                                id="organizer-name-input"
                                 required
                                 type="text"
-                                className="w-full bg-transparent border-2 border-outline rounded-sm p-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                                className="w-full input-focus-ring rounded-lg p-3.5 text-on-surface placeholder-on-surface-dim"
                                 placeholder="Alex"
                                 value={organizerName}
                                 onChange={(e) => setOrganizerName(e.target.value)}
                             />
                         </div>
                         <button
+                            id="generate-qr-button"
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container shadow-elevation-1 py-4 mt-2 rounded-full font-medium flex justify-center items-center gap-2 transition-all disabled:opacity-50"
+                            className="w-full bg-primary hover:bg-primary-hover text-on-primary py-4 mt-2 rounded-full font-bold text-lg flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-glow cursor-pointer"
                         >
                             {loading ? <Loader className="animate-spin" size={24} /> : 'Generate Camera QR'}
                         </button>
                     </form>
                 ) : (
                     // SUCCESS: Show QR and Links
-                    <div className="text-center animate-in fade-in zoom-in duration-300">
-                        <h2 className="text-2xl font-semibold text-primary mb-2">Event Created!</h2>
+                    <div className="text-center animate-fadeInZoom">
+                        <h2 className="text-2xl font-extrabold text-primary mb-2">Event Created! 🎉</h2>
                         <p className="text-on-surface-variant mb-6">Have your guests scan this code.</p>
 
-                        <div className="bg-white p-4 rounded-3xl inline-block mb-6 shadow-elevation-2">
-                            <img src={createdEvent.qr_code_url || createdEvent.qr_url} alt="QR Code" className="w-48 h-48" />
+                        <div className="bg-white p-4 rounded-2xl inline-block mb-6 shadow-deep">
+                            <img src={createdEvent.qr_code_url || createdEvent.qr_url} alt="QR Code" className="w-52 h-52" />
                         </div>
 
-                        <div className="space-y-3">
+                        <div>
                             <button
+                                id="go-to-dashboard-button"
                                 onClick={() => navigate(`/dashboard/${createdEvent.event_id}`)}
-                                className="w-full bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary py-4 rounded-full font-medium flex justify-center items-center gap-2 transition-colors shadow-elevation-1"
+                                className="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface py-4 rounded-full font-medium flex justify-center items-center gap-2 transition-colors border border-border cursor-pointer"
                             >
                                 Go to Organizer Dashboard <ArrowRight size={20} />
                             </button>

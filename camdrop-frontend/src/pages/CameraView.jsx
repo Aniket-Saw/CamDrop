@@ -45,7 +45,6 @@ const CameraView = () => {
         };
     }, []);
 
-    // Listen for realtime 'Develop' command from Dashboard
     // Listen for realtime 'Develop' command and 'total_photos' increment
     useEffect(() => {
         const fetchEventData = async () => {
@@ -208,13 +207,18 @@ const CameraView = () => {
 
     if (isDeveloped) {
         return (
-            <div className="flex h-screen flex-col items-center justify-center bg-surface p-6 text-center text-on-surface">
-                <CameraIcon size={64} className="mb-4 text-primary" />
-                <h1 className="mb-2 text-3xl font-bold">Event Developed!</h1>
-                <p className="mb-8 text-on-surface-variant text-lg">The organizer has closed the cameras and revealed the photos.</p>
+            <div className="flex h-screen flex-col items-center justify-center bg-surface p-6 text-center">
+                <div className="w-24 h-24 rounded-full bg-surface-container-high flex items-center justify-center mb-6 shadow-card">
+                    <CameraIcon size={48} className="text-primary" />
+                </div>
+                <h1 className="mb-3 text-3xl font-black text-on-surface">Event Developed!</h1>
+                <p className="mb-8 text-on-surface-variant text-lg max-w-sm">
+                    The organizer has closed the cameras and revealed the photos.
+                </p>
                 <button
+                    id="view-gallery-button"
                     onClick={() => navigate(`/gallery/${eventId}`)}
-                    className="rounded-full bg-primary px-8 py-4 font-medium text-on-primary shadow-elevation-1 transition active:scale-95"
+                    className="bg-primary hover:bg-primary-hover text-on-primary px-8 py-4 rounded-full font-bold text-lg transition-all active:scale-95 shadow-glow cursor-pointer"
                 >
                     View the Gallery
                 </button>
@@ -223,24 +227,28 @@ const CameraView = () => {
     }
 
     return (
-        <div className="flex h-screen flex-col bg-black text-white">
+        <div className="flex h-screen flex-col bg-black text-white overflow-hidden">
             {/* Top HUD */}
-            <div className="absolute top-0 z-10 flex w-full justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
+            <div className="absolute top-0 z-10 flex w-full justify-between items-start p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
                 <div className="flex flex-col">
-                    <span className="font-bold">{guestName}</span>
-                    <span className="text-xs text-yellow-500 font-semibold animate-pulse mt-1">
+                    <span className="font-bold text-sm">{guestName}</span>
+                    <span className="text-xs text-primary font-semibold animate-pulseGlow mt-1">
                         🔥 {livePulse} photos snapped
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    {isOffline && <CloudOff size={20} className="text-red-500" />}
-                    {isSyncing && <RefreshCw size={20} className="animate-spin text-yellow-500" />}
-                    {pendingCount > 0 && <span className="rounded bg-yellow-500 px-2 py-1 text-xs font-bold text-black">{pendingCount} Pending</span>}
+                    {isOffline && <CloudOff size={18} className="text-danger" />}
+                    {isSyncing && <RefreshCw size={18} className="animate-spin text-primary" />}
+                    {pendingCount > 0 && (
+                        <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-on-primary">
+                            {pendingCount}
+                        </span>
+                    )}
                 </div>
             </div>
 
             {/* Viewfinder / Review Screen */}
-            <div className="relative flex-grow overflow-hidden bg-zinc-900">
+            <div className="relative flex-grow overflow-hidden bg-surface-container">
                 {!imgSrc ? (
                     <Webcam
                         audio={false}
@@ -253,14 +261,14 @@ const CameraView = () => {
                     <>
                         <img src={imgSrc} alt="Captured" className="h-full w-full object-cover" />
                         
-                        {/* NEW: Quality Warning Overlay */}
+                        {/* Quality Warning Overlay */}
                         {qualityWarning && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center rounded-xl bg-black/80 px-6 py-4 text-red-500 animate-pulse border border-red-500/50 backdrop-blur-sm">
-                                <AlertTriangle size={32} className="mb-2" />
-                                <span className="text-xl font-black uppercase tracking-widest text-center">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center rounded-2xl bg-black/80 px-6 py-4 text-danger backdrop-blur-md border border-danger/30">
+                                <AlertTriangle size={28} className="mb-2" />
+                                <span className="text-lg font-black uppercase tracking-widest text-center">
                                     {qualityWarning}
                                 </span>
-                                <span className="text-xs text-zinc-400 mt-1">Scrap to try again</span>
+                                <span className="text-xs text-on-surface-variant mt-1">Scrap to try again</span>
                             </div>
                         )}
                     </>
@@ -268,26 +276,39 @@ const CameraView = () => {
             </div>
 
             {/* Controls */}
-            <div className="flex h-32 items-center justify-center bg-black pb-6">
+            <div className="flex h-32 items-center justify-center bg-black pb-6 shrink-0">
                 {!imgSrc ? (
+                    /* Shutter Button */
                     <button
+                        id="shutter-button"
                         onClick={capture}
-                        className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-yellow-500 bg-white text-black active:scale-90 transition-transform"
+                        className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-primary bg-white active:scale-90 transition-transform cursor-pointer shadow-glow"
                     >
-                        <CameraIcon size={32} />
+                        <CameraIcon size={32} className="text-black" />
                     </button>
                 ) : (
-                    <div className="flex w-full max-w-md justify-around px-6">
-                        <button onClick={scrap} className="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-red-600 text-white active:scale-90">
+                    /* Review Controls */
+                    <div className="flex w-full max-w-md justify-around items-center px-6">
+                        {/* Scrap */}
+                        <button
+                            id="scrap-button"
+                            onClick={scrap}
+                            className="flex h-16 w-16 items-center justify-center rounded-full bg-danger text-white active:scale-90 transition-transform cursor-pointer"
+                        >
                             <X size={28} />
                         </button>
 
-                        {/* The 5-Second Countdown Indicator */}
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-zinc-600 text-2xl font-bold">
-                            {timeLeft}
+                        {/* Countdown */}
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border-light animate-countdownPulse">
+                            <span className="text-2xl font-mono font-bold">{timeLeft}</span>
                         </div>
 
-                        <button onClick={keep} className="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-green-500 text-white active:scale-90">
+                        {/* Keep */}
+                        <button
+                            id="keep-button"
+                            onClick={keep}
+                            className="flex h-16 w-16 items-center justify-center rounded-full bg-success text-on-success active:scale-90 transition-transform cursor-pointer"
+                        >
                             <Check size={28} />
                         </button>
                     </div>
