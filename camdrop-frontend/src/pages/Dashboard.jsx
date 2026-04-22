@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Download, QrCode, Camera, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react';
+import { Download, QrCode, Camera, CheckCircle, AlertTriangle, Trash2, Home } from 'lucide-react';
 
 const Dashboard = () => {
     const { eventId } = useParams();
+    const navigate = useNavigate();
 
     const [eventData, setEventData] = useState(null);
     const [photoCount, setPhotoCount] = useState(0);
@@ -36,7 +37,7 @@ const Dashboard = () => {
                         setPhotoCount(payload.new.total_photos);
                     }
                     if (payload.new.is_developed !== undefined) {
-                        setEventData(prev => ({...prev, is_developed: payload.new.is_developed}));
+                        setEventData(prev => ({ ...prev, is_developed: payload.new.is_developed }));
                     }
                 }
             )
@@ -72,7 +73,7 @@ const Dashboard = () => {
         if (event && event.total_photos !== undefined) {
             setPhotoCount(event.total_photos);
         } else if (!eventError) {
-             // Fallback to table count if the trigger column is somehow missing
+            // Fallback to table count if the trigger column is somehow missing
             const { count } = await supabase.from('photos').select('*', { count: 'exact', head: true }).eq('event_id', eventId);
             setPhotoCount(count || 0);
         }
@@ -122,7 +123,7 @@ const Dashboard = () => {
                 method: 'DELETE',
             });
             const result = await response.json();
-            
+
             if (response.ok) {
                 alert("All photos have been successfully deleted from the server.");
                 setPhotoCount(0); // Instantly drop the UI dial to 0
@@ -146,6 +147,16 @@ const Dashboard = () => {
 
                 {/* Header */}
                 <header className="mb-8 pb-6 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                        <button
+                            id="dashboard-home-button"
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-2 text-on-surface-variant hover:text-primary text-sm font-medium transition-colors cursor-pointer"
+                        >
+                            <Home size={18} />
+                            Home
+                        </button>
+                    </div>
                     <h1 className="text-4xl font-black text-primary md:text-5xl tracking-tight">{eventData.name}</h1>
                     <p className="text-on-surface-variant mt-2 text-lg">Organizer: <span className="text-on-surface font-medium">{eventData.organizer_name}</span></p>
                 </header>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import { Camera, AlertCircle, Lock } from 'lucide-react';
 
 const JoinEvent = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const inputRef = useRef(null);
     const [eventName, setEventName] = useState('');
     const [guestName, setGuestName] = useState('');
@@ -44,12 +46,25 @@ const JoinEvent = () => {
         }
     }, [loading, notFound, isDeveloped]);
 
-    const handleJoin = () => {
+    const handleJoin = async () => {
         if (!guestName.trim()) return alert("Please enter your name");
 
         // Store info for the camera session
         localStorage.setItem('camdrop_guest', guestName);
         localStorage.setItem('camdrop_event_id', eventId);
+
+        // Silently register as attendee if user is logged in
+        if (user) {
+            await supabase
+                .from('event_attendees')
+                .upsert(
+                    { event_id: eventId, user_id: user.id },
+                    { onConflict: 'event_id,user_id' }
+                )
+                .then(({ error }) => {
+                    if (error) console.error('Attendee registration error:', error);
+                });
+        }
 
         navigate(`/camera/${eventId}`);
     };

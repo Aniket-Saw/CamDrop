@@ -123,7 +123,7 @@ const Gallery = () => {
                             {Object.entries(albums).map(([guestName, guestPhotos]) => (
                                 <div key={guestName}>
                                     <h3 className="text-xl font-bold text-primary mb-4 px-2 flex items-center gap-2">
-                                        📸 {guestName}'s Roll
+                                        {guestName}'s Roll
                                         <span className="text-sm font-normal text-on-surface-variant">
                                             ({guestPhotos.length} {guestPhotos.length === 1 ? 'photo' : 'photos'})
                                         </span>
@@ -140,7 +140,7 @@ const Gallery = () => {
                                                 {/* Attribution Overlay */}
                                                 <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                                                     <span className="text-xs font-semibold text-primary">
-                                                        📸 {photo.guestName}
+                                                        {photo.guestName}
                                                     </span>
                                                 </div>
                                             </div>

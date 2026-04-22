@@ -4,6 +4,7 @@ import qrcode
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from supabase import create_client, Client
 from dotenv import load_dotenv
 # Add this import at the top of your main.py
@@ -37,16 +38,21 @@ app.add_middleware(
 class EventCreate(BaseModel):
     name: str
     organizer_name: str
+    user_id: Optional[str] = None
 
 @app.post("/events/", status_code=201)
 async def create_event(event: EventCreate):
     try:
         # 1. Insert into Database
-        response = supabase.table("events").insert({
+        insert_data = {
             "name": event.name,
             "organizer_name": event.organizer_name,
             "is_developed": False
-        }).execute()
+        }
+        if event.user_id:
+            insert_data["user_id"] = event.user_id
+        
+        response = supabase.table("events").insert(insert_data).execute()
         
         event_data = response.data[0]
         event_id = event_data["id"]

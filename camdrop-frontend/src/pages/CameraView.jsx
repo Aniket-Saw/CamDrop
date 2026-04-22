@@ -103,10 +103,10 @@ const CameraView = () => {
         setImgSrc(imageSrc);
         setTimeLeft(5); // Start the clock
         setQualityWarning(null); // Reset warnings
-        
+
         // Fire the edge compute check
         const quality = await analyzeImageQuality(imageSrc);
-        
+
         if (quality.isDark && quality.isBlurry) {
             setQualityWarning("Dark & Blurry!");
         } else if (quality.isDark) {
@@ -233,7 +233,7 @@ const CameraView = () => {
                 <div className="flex flex-col">
                     <span className="font-bold text-sm">{guestName}</span>
                     <span className="text-xs text-primary font-semibold animate-pulseGlow mt-1">
-                        🔥 {livePulse} photos snapped
+                        {livePulse} photos snapped
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ const CameraView = () => {
                 ) : (
                     <>
                         <img src={imgSrc} alt="Captured" className="h-full w-full object-cover" />
-                        
+
                         {/* Quality Warning Overlay */}
                         {qualityWarning && (
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center rounded-2xl bg-black/80 px-6 py-4 text-danger backdrop-blur-md border border-danger/30">
