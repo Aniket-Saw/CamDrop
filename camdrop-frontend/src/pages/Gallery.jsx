@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Lock, Image as ImageIcon } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, Download } from 'lucide-react';
 
 const Gallery = () => {
     const { eventId } = useParams();
@@ -11,6 +11,7 @@ const Gallery = () => {
     const [eventName, setEventName] = useState('');
     const [albums, setAlbums] = useState({});
     const [loading, setLoading] = useState(true);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     // --- Middle Level: Core Logic & Real-time Fetching ---
     useEffect(() => {
@@ -134,8 +135,9 @@ const Gallery = () => {
                                                 <img
                                                     src={photo.url}
                                                     alt={`Taken by ${photo.guestName}`}
-                                                    className="w-full h-48 md:h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    className="w-full h-48 md:h-64 object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer"
                                                     loading="lazy"
+                                                    onClick={() => setSelectedPhoto(photo)}
                                                 />
                                                 {/* Attribution Overlay */}
                                                 <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
@@ -150,6 +152,40 @@ const Gallery = () => {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Fullscreen Photo Lightbox */}
+            {selectedPhoto && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+                    onClick={() => setSelectedPhoto(null)}
+                >
+                    <button 
+                        className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full bg-surface-container-high text-on-surface hover:text-primary transition-colors"
+                        onClick={() => setSelectedPhoto(null)}
+                    >
+                        <X size={24} />
+                    </button>
+                    
+                    <img 
+                        src={selectedPhoto.url} 
+                        alt="Fullscreen view" 
+                        className="max-w-full max-h-[90vh] object-contain rounded-md"
+                        onClick={(e) => e.stopPropagation()} 
+                    />
+
+                    <a 
+                        href={selectedPhoto.url}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        className="absolute bottom-6 md:bottom-10 flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Download size={20} />
+                        Download
+                    </a>
                 </div>
             )}
         </div>
