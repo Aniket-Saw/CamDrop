@@ -254,7 +254,13 @@ const CameraView = () => {
                         audio={false}
                         ref={webcamRef}
                         screenshotFormat="image/jpeg"
-                        videoConstraints={{ facingMode: "environment" }}
+                        screenshotQuality={1}
+                        forceScreenshotSourceSize={true}
+                        videoConstraints={{ 
+                            facingMode: "environment",
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 }
+                        }}
                         className="h-full w-full object-cover"
                     />
                 ) : (
