@@ -22,7 +22,8 @@ const Home = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: eventName,
-                    organizer_name: organizerName
+                    organizer_name: organizerName,
+                    frontend_url: window.location.origin
                 })
             });
 
