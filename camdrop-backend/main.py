@@ -39,6 +39,7 @@ class EventCreate(BaseModel):
     name: str
     organizer_name: str
     user_id: Optional[str] = None
+    frontend_url: Optional[str] = None
 
 @app.post("/events/", status_code=201)
 async def create_event(event: EventCreate):
@@ -57,8 +58,9 @@ async def create_event(event: EventCreate):
         event_data = response.data[0]
         event_id = event_data["id"]
 
-        # 2. Generate QR Code
-        deep_link = f"{FRONTEND_URL}/join/{event_id}"
+        # 2. Generate QR Code using the provided frontend_url or fallback to env var
+        base_url = event.frontend_url if event.frontend_url else FRONTEND_URL
+        deep_link = f"{base_url}/join/{event_id}"
         qr = qrcode.make(deep_link)
         img_byte_arr = io.BytesIO()
         qr.save(img_byte_arr, format='PNG')

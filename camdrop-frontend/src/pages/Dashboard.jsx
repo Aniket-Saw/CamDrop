@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import API_BASE_URL from '../config';
 import { Download, QrCode, Camera, CheckCircle, AlertTriangle, Trash2, Home } from 'lucide-react';
 
 const Dashboard = () => {
@@ -90,7 +91,7 @@ const Dashboard = () => {
 
         try {
             // Call our FastAPI backend endpoint
-            const response = await fetch(`http://localhost:8000/events/${eventId}/develop`, {
+            const response = await fetch(`${API_BASE_URL}/events/${eventId}/develop`, {
                 method: 'PUT',
             });
 
@@ -119,7 +120,7 @@ const Dashboard = () => {
 
         setIsDeleting(true);
         try {
-            const response = await fetch(`http://localhost:8000/events/${eventId}/photos`, {
+            const response = await fetch(`${API_BASE_URL}/events/${eventId}/photos`, {
                 method: 'DELETE',
             });
             const result = await response.json();

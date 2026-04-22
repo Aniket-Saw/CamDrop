@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ArrowRight, Loader } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Home = () => {
 
         try {
             // Make sure your FastAPI server is running on port 8000!
-            const response = await fetch('http://localhost:8000/events/', {
+            const response = await fetch(`${API_BASE_URL}/events/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
