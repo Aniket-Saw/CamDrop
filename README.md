@@ -1,3 +1,5 @@
+Try out this app : https://cam-drop.vercel.app/
+
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
   <img src="https://img.shields.io/badge/FastAPI-0.135-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
@@ -77,37 +79,22 @@ The gallery automatically groups photos into **personalized albums by guest name
 
 | Sign In | Home Dashboard |
 |:---:|:---:|
-| *`screenshot_signin.png`* | *`screenshot_home.png`* |
+| <img width="296" height="549" alt="image" src="https://github.com/user-attachments/assets/68d18860-6326-44df-81b3-fbaa45173213" />  | <img width="289" height="588" alt="image" src="https://github.com/user-attachments/assets/d7167494-0f1a-47a0-9f27-3f2b653bc9ca" />
+ |
 
 ### Event Creation Flow
 
 | Create Event | QR Code Generated |
 |:---:|:---:|
-| *`screenshot_create.png`* | *`screenshot_qr.png`* |
-
-### Camera Experience
-
-| Viewfinder | Photo Review (5s Timer) | Quality Warning |
-|:---:|:---:|:---:|
-| *`screenshot_camera.png`* | *`screenshot_review.png`* | *`screenshot_quality_warning.png`* |
-
-### Live Pulse & HUD
-
-| Live Counter | Offline Mode |
-|:---:|:---:|
-| *`screenshot_pulse.png`* | *`screenshot_offline.png`* |
+| <img width="234" height="500" alt="image" src="https://github.com/user-attachments/assets/4774d9ac-cc79-42f5-83bc-53c55f94b0e1" /> | <img width="229" height="510" alt="image" src="https://github.com/user-attachments/assets/69fdf95d-42f5-420c-9a12-78373bb38719" /> |
 
 ### Organizer Dashboard
 
 | Dashboard (Live) | Dashboard (Developed) |
 |:---:|:---:|
-| *`screenshot_dashboard_live.png`* | *`screenshot_dashboard_developed.png`* |
+| <img width="225" height="513" alt="image" src="https://github.com/user-attachments/assets/cd793094-f061-455d-8855-c2f64d5c3df5" /> | *`screenshot_dashboard_developed.png`* |
 
-### Gallery & Albums
 
-| Guest Albums | Photo Grid |
-|:---:|:---:|
-| *`screenshot_albums.png`* | *`screenshot_gallery.png`* |
 
 ---
 
