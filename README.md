@@ -1,4 +1,4 @@
-Try out this app : https://cam-drop.vercel.app/
+<h3 align="center" > Try out this app : https://cam-drop.vercel.app/ </h3>
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
@@ -92,7 +92,7 @@ The gallery automatically groups photos into **personalized albums by guest name
 
 | Dashboard (Live) | Dashboard (Developed) |
 |:---:|:---:|
-| <img width="225" height="513" alt="image" src="https://github.com/user-attachments/assets/cd793094-f061-455d-8855-c2f64d5c3df5" /> | *`screenshot_dashboard_developed.png`* |
+| <img width="225" height="513" alt="image" src="https://github.com/user-attachments/assets/cd793094-f061-455d-8855-c2f64d5c3df5" /> |  <img width="302" height="604" alt="image" src="https://github.com/user-attachments/assets/c2322816-a84f-4aac-87bb-1bdf58fe74a2" /> |
 
 
 
